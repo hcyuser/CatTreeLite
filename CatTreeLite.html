@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+  <title>CatTree Lite</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.8/themes/default/style.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jstree-bootstrap-theme@1.0.1/src/themes/proton/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+  <script>
+
+    function initialTreefromTreeStructure(TreeStructure, onclickFun){
+        $('#CatTree1').jstree({ 'core' : {
+          'data' : TreeStructure,
+          'themes': {
+                  'name': 'proton',
+                  'responsive': true
+              }
+          }
+        });
+
+        if(onclickFun){
+          $('#CatTree1').on("changed.jstree", function (e, data) {
+            var i, j;
+            for(i = 0, j = data.selected.length; i < j; i++)  {
+              //console.log(data);
+              onclickFun(data.node.original);
+            }
+          });
+        }
+
+    }
+
+    function initialTreefromDocuSkySearch(DocuSkySearch, onclickFun){
+        //console.log(DocuSkySearch);
+        var TreeStructure = [];
+        TreeStructure[0] = {'id': '0', 'parent': '#', 'text': 'CatTree Lite'};
+        var TreeStructureAppendInfo = {'id':1};
+        for(index in DocuSkySearch){
+          //console.log(DocuSkySearch[index].cnt);
+          //console.log(DocuSkySearch[index]);
+          var splitArr = DocuSkySearch[index].cue.split('/');
+          var cnt = DocuSkySearch[index].cnt;
+          for(indexNode in splitArr){
+            //console.log(DocuSkySearch[index].cue);
+            //console.log(splitArr);
+            if(!isNodeNameinTreeStructure(indexNode,splitArr,TreeStructure)){
+              //console.log(DocuSkySearch[index].cue.split('/')[indexNode]);
+              //console.log(splitArr[indexNode]);
+              //console.log(splitArr);
+              //console.log(cnt);
+              //console.log(TreeStructure);
+              addNodeNametoTreeStructure(indexNode,cnt,splitArr,TreeStructure,TreeStructureAppendInfo);
+            }
+          }
+        }
+        //console.log(TreeStructure);
+        initialTreefromTreeStructure(TreeStructure, onclickFun);
+
+    }
+
+    function isNodeNameinTreeStructure(indexNode,splitArr,TreeStructure){
+      if(indexNode==0){
+        for(index in TreeStructure){
+          if(TreeStructure[index].text == splitArr[indexNode] && TreeStructure[index].parent==0){
+            return true;
+          }
+        }
+        return false;
+      }else{
+        for(index in TreeStructure){
+          if(TreeStructure[index].text == splitArr[indexNode]){
+            //splitArr[indexNode-1] = TreeStructure[TreeStructure[index].parent].text;
+            //splitArr[indexNode-2] = TreeStructure[TreeStructure[index].parent].text;
+            var parentID = TreeStructure[index].parent;
+            for(var i = indexNode-1; i>=0; i--){
+              if(splitArr[i]==TreeStructure[parentID].text){
+                parentID = TreeStructure[parentID].parent;
+              }else{
+                return false;
+              }
+            }
+            if(parentID==0){
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+    }
+    function getParentID(indexNode,splitArr,TreeStructure){
+      if(indexNode==0){
+        return 0;
+      }else{
+        var parentID = 0;
+        var grandID = -1;
+        for(index in TreeStructure){
+          if(TreeStructure[index].text == splitArr[indexNode-1]){
+            //splitArr[indexNode-1] = TreeStructure[TreeStructure[index].parent].text;
+            //splitArr[indexNode-2] = TreeStructure[TreeStructure[index].parent].text;
+            parentID = TreeStructure[index].id;
+            grandID = TreeStructure[index].id;
+            if(splitArr.length>2){
+              for(var i = indexNode-2; i>=0; i--){
+                if(splitArr[i]==TreeStructure[TreeStructure[grandID].parent].text){
+                  grandID = TreeStructure[grandID].parent;
+                }
+              }
+            }
+            /*if(TreeStructure[grandID].parent==0){
+              return parentID;
+            }*/
+
+          }
+        }
+        return parentID;
+      }
+
+    }
+    function addNodeNametoTreeStructure(indexNode,count,splitArr,TreeStructure,TreeStructureAppendInfo){
+      if(indexNode==0 && splitArr.length==1 && count!=0){
+        TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': '0', 'text': splitArr[indexNode]+`(${count}件)`};
+      }else if(indexNode==splitArr.length-1){
+        var ParentID = getParentID(indexNode,splitArr,TreeStructure);
+        TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]+`(${count}件)`};
+      }else{
+        var ParentID = getParentID(indexNode,splitArr,TreeStructure);
+        TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]};
+      }
+      TreeStructureAppendInfo.id += 1;
+    }
+
+    function initialTreefromTreeStructureandDocuSkySearch(TreeStructure, DocuSkySearch, onclickFun){
+      var TreeStructurewithCNT = TreeStructure;
+      for(index in DocuSkySearch){
+        var splitArr = DocuSkySearch[index].cue.split('/');
+        var cnt = DocuSkySearch[index].cnt;
+        var ParentID = getParentID(splitArr.length-1,splitArr,TreeStructurewithCNT);
+        for(indexStructure in TreeStructurewithCNT){
+          if(TreeStructurewithCNT[indexStructure].text==splitArr[splitArr.length-1] && ParentID==TreeStructurewithCNT[indexStructure].parent){
+            TreeStructurewithCNT[indexStructure].text += `(${cnt}件)`;
+          }
+        }
+      }
+      initialTreefromTreeStructure(TreeStructurewithCNT, onclickFun);
+
+    }
+
+    function openTreeRoot(){
+      $("#CatTree1").on('loaded.jstree', function() {
+        $("#CatTree1").jstree("open_node", $("#0"));
+      });
+    }
+
+    function openTreeAll(){
+      $("#CatTree1").on('loaded.jstree', function() {
+        $("#CatTree1").jstree('open_all');
+      });
+    }
+
+    function receiveMessage( event ) {
+  		//console.log( 'receiveMessageData', event.data );
+      if(event.data.length==0){
+        alert('Error No Tree Data');
+      }
+      for(index in event.data){
+        var receiveData = event.data[index];
+        //console.log(receiveData);
+        if(receiveData.DocuSkySearch && receiveData.TreeStructure){
+          if(receiveData.onclick){
+            eval('onclickFun = ' + decodeURI(receiveData.onclick));
+            //console.log(receiveData.DocuSkySearch);
+            initialTreefromTreeStructureandDocuSkySearch(receiveData.TreeStructure,receiveData.DocuSkySearch, onclickFun);
+          }else{
+            initialTreefromTreeStructureandDocuSkySearch(receiveData.TreeStructure,receiveData.DocuSkySearch, null);
+          }
+
+        }else if(receiveData.DocuSkySearch){
+          if(receiveData.onclick){
+            eval('onclickFun = ' + decodeURI(receiveData.onclick));
+            //console.log(receiveData.DocuSkySearch);
+            initialTreefromDocuSkySearch(receiveData.DocuSkySearch, onclickFun);
+          }else{
+            initialTreefromDocuSkySearch(receiveData.DocuSkySearch, null);
+          }
+        }else if(receiveData.TreeStructure){
+          if(receiveData.onclick){
+            eval('onclickFun = ' + decodeURI(receiveData.onclick));
+            //console.log(onclickFun);
+            initialTreefromTreeStructure(receiveData.TreeStructure, onclickFun);
+          }else{
+            initialTreefromTreeStructure(receiveData.TreeStructure, null);
+          }
+
+        }else{
+          alert('Error No Tree Data');
+        }
+        openTreeRoot();
+      }
+	 }
+   window.addEventListener("message", receiveMessage, false);
+  </script>
+
+</head>
+<body>
+  <div id="CatTree1">
+  </div>
+
+</body>
+
+</html>

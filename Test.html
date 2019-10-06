@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+  <title>Test CatTree Lite</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="http://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
+  <script src="http://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
+  <link href="http://docusky.org.tw/DocuSky/fonts/fontawesome-5.10.1/css/fontawesome.css" rel="stylesheet">
+
+  <script>
+    $( document ).ready(function() {
+      $("#Test").click(function(evt) {
+        iframeTree(evt);
+      });
+    });
+
+    function iframeTree(evt){
+      var url = "./CatTreeLite.html";
+      var iframeWidth = 400;
+      var iframeHeight = 620;
+      var title = "CatTree Lite";
+      var iframeId = showUrlIframe(evt, url, title, iframeWidth, iframeHeight);
+      var postMessageData = getPostMessageData();
+      $(iframeId).ready(function() {
+          window.setTimeout(function() {
+             document.getElementById(iframeId).contentWindow.postMessage(postMessageData, "*");
+          }, 1500);
+       });
+    }
+  function showUrlIframe(evt, url, title, width, height, backgroundColor = '#EFEFEF') {
+       //alert(url);
+       var timestamp = (new Date()).getTime();
+       var divId = "div_" + timestamp;           // 2018-10-28
+       var containerId = "span_" + timestamp;
+       var iframeId = "iframe_" + timestamp;
+       // fa-window-close, fa-times, fa-times-circle
+       // style='text-align:center; padding:2px 4px; background-color:#BFBFBF; color:black; cursor:pointer;
+       var s = "<div id='" + divId + "' class='ui-widget-content' style='display:none; position:absolute; background-color:" + backgroundColor + "; border:2px solid #7F7F7F; border-radius:4px;'>"
+             + "<table width='100%' cellpadding='0' cellspacing='0'>"
+             + "<tr style='width:" + width + "px; padding-right:5px; background-color:navy; color:white; cursor:grab;'>"
+             + "<td align='left' style='color:white; padding-left:8px'>" + title + "</td>"
+             + "<td align='right' width='36'>"
+             + "<span id='" + containerId + "' class='closeIframeContainer' style='padding-right:6px; cursor:pointer;' x-data='" + timestamp + "'><i class='fa fa-window-close'></i></span>"
+             + "</td>"
+             + "</tr></table>"
+             + "<iframe id='" + iframeId + "' src='javascript:void(0)' style='width:" + width + "px; height:" + height + "px;'>"
+             + "</iframe>"
+             + "</div>";
+       $("#iframeArea").append(s);
+       $("#" + containerId).click(() => $("#" + divId).remove());     // 2019-06-11
+       $("#" + iframeId).contents().find('html').html("<center></center>");
+       var resizeOption = { alsoResize: "#" + iframeId,     // 2018-10-28
+                            minWidth: 400,
+                            minHeight: 300};
+       $("#" + divId).fadeIn(800)
+                     .position({my:"left+10 top+10", at: "center bottom", of: evt, collision: "fit"})
+                     .draggable()
+                     .resizable(resizeOption);
+       $("#" + iframeId).attr('src', url);      // .load(function(){});
+       return iframeId;
+    }
+    function getPostMessageData(){
+      var CatTreeMessage = [];
+      var TreeStructureSample = [ {'id': '0', 'parent': '#', 'text': '淡新檔案客家事件分類', 'onclickDate': '666'},
+                            {'id': '1', 'parent': '0', 'text': '土地', 'Mark': 'Test'},
+                            {'id': '2', 'parent': '1', 'text': '-', 'Mark':'123'},
+                            {'id': '3', 'parent': '2', 'text': '-'},
+                            {'id': '4', 'parent': '0', 'text': '宗教'},
+                            {'id': '5', 'parent': '4', 'text': '嘗會'},
+                            {'id': '6', 'parent': '5', 'text': '-'},
+                            ];
+      //var DocuSkySearchData = [{cue:'-/-/-',cnt:'100', 'Mark': '124'}];
+      var DocuSkySearchData = [{cue:'土地/-',cnt:'100', 'Mark': '124'},{cue:'宗教/嘗會/-',cnt:'12'},
+                              {cue:'宗教/廟宇/1', cnt:'122'},{cue:'宗教/廟宇/故事', cnt:'124'},{cue:'宗教/廟1/故事', cnt:'125'},{cue:'N/N/N', cnt:'124'},{cue:'-/1/-', cnt:'124'}];
+      var onclick = function(data){
+        console.log('Test: '+ JSON.stringify(data));
+        window.open('http://140.112.114.10/DocuSky/webApi/webpage-search-3in1.php?db=淡新檔案&corpus=淡新檔案&queryBase='+data.text);
+      }
+
+      // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample,onclick: encodeURI(onclick.toString())}
+      // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample}
+      CatTreeMessage[0] = {DocuSkySearch: DocuSkySearchData,onclick: encodeURI(onclick.toString())}
+      // ok CatTreeMessage[0] = {DocuSkySearch: DocuSkySearchData}
+      // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData,onclick: encodeURI(onclick.toString())}
+      // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData}
+      return CatTreeMessage;
+    }
+  </script>
+</head>
+<body>
+  <button type="button" id="Test">Test CatTree Lite</button>
+  <br>
+  <div id='iframeArea'></div>
+</body>
+
+</html>
