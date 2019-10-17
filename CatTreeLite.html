@@ -120,7 +120,7 @@
         }
       });
 
-
+      openTreeTerm(TreeStructure, option);
 
     }
 
@@ -263,6 +263,32 @@
       });
     }
 
+    function openTreeTerm(TreeStructure, option){
+      var openNodeArr = [];
+      if(option.openTreeTerm){
+        for(index in TreeStructure){
+            if(TreeStructure[index].text.includes(option.openTreeTerm)){
+              var id = index;
+              while(id != '#'){
+                openNodeArr.push(id);
+                id = TreeStructure[id].parent;
+              }
+
+            }
+        }
+
+        $("#CatTree" + option.id).on('loaded.jstree', function() {
+          for( var i = openNodeArr.length; i >= 0; i--){
+            $("#CatTree" + option.id).jstree("open_node", $("#"+openNodeArr[i]));
+          }
+
+        });
+        //console.log(openNodeArr);
+      }
+
+
+    }
+
     function receiveMessage( event ) {
   		//console.log( 'receiveMessageData', event.data );
       if(event.data.length==0){
@@ -323,6 +349,7 @@
         if(receiveData.option.openTreeAll){
           openTreeAll(receiveData.option.id);
         }
+
       }
 
       $(".tree").hide();

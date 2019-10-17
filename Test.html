@@ -80,25 +80,34 @@
       }
 
       CatTreeMessage[0] = {TreeStructure: TreeStructureSample,
-                          option:
-                          {
-                              onclick: encodeURI(onclick.toString()),
-                              title: '淡新檔案客家事件分類',
-                              theme: 'dark'
+                            option:
+                            {
+                                onclick: encodeURI(onclick.toString()),
+                                title: '淡新檔案客家事件分類',
+                                theme: 'dark'
+                            }
                           }
-      }
       // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample}
       // ok CatTreeMessage[0] = {DocuSkySearch: DocuSkySearchData,onclick: encodeURI(onclick.toString())}
-      CatTreeMessage[1] = {DocuSkySearch: DocuSkySearchData}
-      // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData,onclick: encodeURI(onclick.toString())}
-      CatTreeMessage[2] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData,
+      CatTreeMessage[1] = {DocuSkySearch: DocuSkySearchData,
+                            option:
+                            {
+                                onclick: encodeURI(onclick.toString()),
+                                title: '666',
+                                openTreeTerm : '故事'
+
+                            }
+                          }
+      CatTreeMessage[2] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData,onclick: encodeURI(onclick.toString())}
+      CatTreeMessage[3] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData,
                               option:
                               {
                                   onclick: encodeURI(onclick.toString()),
                                   title: '我就愛說中文',
                                   theme: 'original',
                                   quantifierterm: '很多件啊啊啊',
-                                  openTreeAll: true
+                                  //openTreeAll: true,
+                                  openTreeTerm : '嘗會'
                               }
 
                           }
