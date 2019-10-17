@@ -8,10 +8,80 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jstree-bootstrap-theme@1.0.1/src/themes/proton/style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+  <style type='text/css'>
+  button{
+    border-radius:5px;
+    background-color:teal;
+    color:white;
+  }
+  </style>
   <script>
 
-    function initialTreefromTreeStructure(TreeStructure, onclickFun){
-        $('#CatTree1').jstree({ 'core' : {
+    $( document ).ready(function() {
+      //console.log( "ready!" );
+      var treestructurejson_url = getUrlParameter('treestructurejson_url');
+      if(treestructurejson_url){
+        //console.log(treestructurejson_url);
+          var TreeStructure = {};
+          $.ajax({
+                 url: treestructurejson_url,
+                 type: "GET",
+
+                 success: function(data) {
+                    TreeStructure = data;
+                    //console.log(JSON.stringify(data));
+                 },
+                 error : function(error) {
+                    alert('Error');
+                    //console.log("no good "+JSON.stringify(error));
+                 }
+          });
+          var option = {};
+          option.id = 0;
+          initialTreefromTreeStructure(TreeStructure, option);
+      }
+
+    });
+
+    function getUrlParameter(sParam) {
+          var sPageURL = window.location.search.substring(1),
+              sURLVariables = sPageURL.split('&'),
+              sParameterName,
+              i;
+
+          for (i = 0; i < sURLVariables.length; i++) {
+              sParameterName = sURLVariables[i].split('=');
+
+              if (sParameterName[0] === sParam) {
+                  return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+              }
+          }
+    }
+
+    function initialTreefromTreeStructure(TreeStructure, option){
+      if(option.theme == 'original'){
+
+        $('#CatTree' + option.id).jstree({ 'core' : {
+          'data' : TreeStructure
+          }
+        });
+
+      }
+      else if(option.theme == 'dark'){
+
+        $('#CatTree' + option.id).jstree({ 'core' : {
+          'data' : TreeStructure,
+          'themes': {
+                  'responsive': true
+              }
+          }
+        });
+
+
+      }
+      else if(option.theme == 'proton'){
+
+        $('#CatTree' + option.id).jstree({ 'core' : {
           'data' : TreeStructure,
           'themes': {
                   'name': 'proton',
@@ -20,22 +90,49 @@
           }
         });
 
-        if(onclickFun){
-          $('#CatTree1').on("changed.jstree", function (e, data) {
-            var i, j;
-            for(i = 0, j = data.selected.length; i < j; i++)  {
-              //console.log(data);
-              onclickFun(data.node.original);
+      }
+      else{
+
+        $('#CatTree' + option.id).jstree({ 'core' : {
+          'data' : TreeStructure,
+          'themes': {
+                  'name': 'proton',
+                  'responsive': true
+              }
+          }
+        });
+      }
+
+
+      $('#CatTree' + option.id).on("changed.jstree", function (e, data) {
+        var i, j;
+        for(i = 0, j = data.selected.length; i < j; i++)  {
+          //console.log(data);
+          if(data.node.original.url){
+            window.open(data.node.original.url);
+          }else{
+            if(option.onclick){
+              eval('onclickFun = ' + decodeURI(option.onclick));
+              onclickFun(data.node.original, TreeStructure);
             }
-          });
+          }
+
         }
+      });
+
+
 
     }
 
-    function initialTreefromDocuSkySearch(DocuSkySearch, onclickFun){
+    function initialTreefromDocuSkySearch(DocuSkySearch, option){
         //console.log(DocuSkySearch);
         var TreeStructure = [];
-        TreeStructure[0] = {'id': '0', 'parent': '#', 'text': 'CatTree Lite'};
+        if(option.title){
+          TreeStructure[0] = {'id': '0', 'parent': '#', 'text': option.title};
+        }else{
+          TreeStructure[0] = {'id': '0', 'parent': '#', 'text': 'CatTree Lite'};
+        }
+
         var TreeStructureAppendInfo = {'id':1};
         for(index in DocuSkySearch){
           //console.log(DocuSkySearch[index].cnt);
@@ -56,7 +153,7 @@
           }
         }
         //console.log(TreeStructure);
-        initialTreefromTreeStructure(TreeStructure, onclickFun);
+        initialTreefromTreeStructure(TreeStructure, option);
 
     }
 
@@ -132,7 +229,7 @@
       TreeStructureAppendInfo.id += 1;
     }
 
-    function initialTreefromTreeStructureandDocuSkySearch(TreeStructure, DocuSkySearch, onclickFun){
+    function initialTreefromTreeStructureandDocuSkySearch(TreeStructure, DocuSkySearch, option){
       var TreeStructurewithCNT = TreeStructure;
       for(index in DocuSkySearch){
         var splitArr = DocuSkySearch[index].cue.split('/');
@@ -140,23 +237,29 @@
         var ParentID = getParentID(splitArr.length-1,splitArr,TreeStructurewithCNT);
         for(indexStructure in TreeStructurewithCNT){
           if(TreeStructurewithCNT[indexStructure].text==splitArr[splitArr.length-1] && ParentID==TreeStructurewithCNT[indexStructure].parent){
-            TreeStructurewithCNT[indexStructure].text += `(${cnt}件)`;
+            if(option.quantifierterm){
+              TreeStructurewithCNT[indexStructure].text += `(${cnt}${option.quantifierterm})`;
+            }else{
+              TreeStructurewithCNT[indexStructure].text += `(${cnt}件)`;
+            }
+
           }
         }
       }
-      initialTreefromTreeStructure(TreeStructurewithCNT, onclickFun);
+      initialTreefromTreeStructure(TreeStructurewithCNT, option);
 
     }
 
-    function openTreeRoot(){
-      $("#CatTree1").on('loaded.jstree', function() {
-        $("#CatTree1").jstree("open_node", $("#0"));
+    function openTreeRoot(index){
+
+      $("#CatTree" + index).on('loaded.jstree', function() {
+        $("#CatTree" + index).jstree("open_node", $("#0"));
       });
     }
 
-    function openTreeAll(){
-      $("#CatTree1").on('loaded.jstree', function() {
-        $("#CatTree1").jstree('open_all');
+    function openTreeAll(index){
+      $("#CatTree" + index).on('loaded.jstree', function() {
+        $("#CatTree" + index).jstree('open_all');
       });
     }
 
@@ -164,40 +267,77 @@
   		//console.log( 'receiveMessageData', event.data );
       if(event.data.length==0){
         alert('Error No Tree Data');
+        return;
       }
+
+
+      var buttonHTML = '';
+      var TreeHTML = '';
       for(index in event.data){
+
         var receiveData = event.data[index];
         //console.log(receiveData);
+        if(receiveData.option){
+          receiveData.option.id = index;
+        }else{
+          receiveData.option = {};
+          receiveData.option.id = index;
+        }
+
+        if(receiveData.option.title){
+          buttonHTML += `<button class="controlBtn" type="button" bt="${index}">${receiveData.option.title}</button>`;
+        }
+        else{
+          buttonHTML += `<button class="controlBtn" type="button" bt="${index}">CatTree Lite ${index}</button>`;
+        }
+
+        TreeHTML += `<div class="tree" id="CatTree${index}"></div>`;
+
+      }
+
+      $('body').append(buttonHTML);
+      $('body').append(TreeHTML);
+
+      for(index in event.data){
+
+        var receiveData = event.data[index];
+        //console.log(receiveData);
+        if(receiveData.option){
+          receiveData.option.id = index;
+        }else{
+          receiveData.option = {};
+          receiveData.option.id = index;
+        }
+
         if(receiveData.DocuSkySearch && receiveData.TreeStructure){
-          if(receiveData.onclick){
-            eval('onclickFun = ' + decodeURI(receiveData.onclick));
-            //console.log(receiveData.DocuSkySearch);
-            initialTreefromTreeStructureandDocuSkySearch(receiveData.TreeStructure,receiveData.DocuSkySearch, onclickFun);
-          }else{
-            initialTreefromTreeStructureandDocuSkySearch(receiveData.TreeStructure,receiveData.DocuSkySearch, null);
-          }
-
+            initialTreefromTreeStructureandDocuSkySearch(receiveData.TreeStructure,receiveData.DocuSkySearch, receiveData.option);
         }else if(receiveData.DocuSkySearch){
-          if(receiveData.onclick){
-            eval('onclickFun = ' + decodeURI(receiveData.onclick));
-            //console.log(receiveData.DocuSkySearch);
-            initialTreefromDocuSkySearch(receiveData.DocuSkySearch, onclickFun);
-          }else{
-            initialTreefromDocuSkySearch(receiveData.DocuSkySearch, null);
-          }
+            initialTreefromDocuSkySearch(receiveData.DocuSkySearch, receiveData.option);
         }else if(receiveData.TreeStructure){
-          if(receiveData.onclick){
-            eval('onclickFun = ' + decodeURI(receiveData.onclick));
-            //console.log(onclickFun);
-            initialTreefromTreeStructure(receiveData.TreeStructure, onclickFun);
-          }else{
-            initialTreefromTreeStructure(receiveData.TreeStructure, null);
-          }
-
+            initialTreefromTreeStructure(receiveData.TreeStructure, receiveData.option);
         }else{
           alert('Error No Tree Data');
         }
-        openTreeRoot();
+
+        openTreeRoot(receiveData.option.id);
+        if(receiveData.option.openTreeAll){
+          openTreeAll(receiveData.option.id);
+        }
+      }
+
+      $(".tree").hide();
+      $(".controlBtn").hide();
+      if(event.data.length == 1){
+        $(".tree").show();
+      }else{
+        $(".controlBtn").show();
+        $("#CatTree0").show();
+        $(".controlBtn").click(function(){
+          var getIndex = $(this).attr('bt');
+          $(".tree").hide();
+          $("#CatTree"+getIndex).show();
+        });
+
       }
 	 }
    window.addEventListener("message", receiveMessage, false);
@@ -205,9 +345,6 @@
 
 </head>
 <body>
-  <div id="CatTree1">
-  </div>
-
 </body>
 
 </html>

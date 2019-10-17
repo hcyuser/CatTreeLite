@@ -62,7 +62,7 @@
     }
     function getPostMessageData(){
       var CatTreeMessage = [];
-      var TreeStructureSample = [ {'id': '0', 'parent': '#', 'text': '淡新檔案客家事件分類', 'onclickDate': '666'},
+      var TreeStructureSample = [ {'id': '0', 'parent': '#', 'text': '淡新檔案客家事件分類', 'onclickDate': '666', url:'http://yahoo.com.tw'},
                             {'id': '1', 'parent': '0', 'text': '土地', 'Mark': 'Test'},
                             {'id': '2', 'parent': '1', 'text': '-', 'Mark':'123'},
                             {'id': '3', 'parent': '2', 'text': '-'},
@@ -73,17 +73,35 @@
       //var DocuSkySearchData = [{cue:'-/-/-',cnt:'100', 'Mark': '124'}];
       var DocuSkySearchData = [{cue:'土地/-',cnt:'100', 'Mark': '124'},{cue:'宗教/嘗會/-',cnt:'12'},
                               {cue:'宗教/廟宇/1', cnt:'122'},{cue:'宗教/廟宇/故事', cnt:'124'},{cue:'宗教/廟1/故事', cnt:'125'},{cue:'N/N/N', cnt:'124'},{cue:'-/1/-', cnt:'124'}];
-      var onclick = function(data){
-        console.log('Test: '+ JSON.stringify(data));
-        window.open('http://140.112.114.10/DocuSky/webApi/webpage-search-3in1.php?db=淡新檔案&corpus=淡新檔案&queryBase='+data.text);
+      var onclick = function(node, TreeStructure){
+        console.log('Node: '+ JSON.stringify(node));
+        console.log('TreeStructure: '+ JSON.stringify(TreeStructure));
+        window.open('http://140.112.114.10/DocuSky/webApi/webpage-search-3in1.php?db=淡新檔案&corpus=淡新檔案&queryBase='+node.text);
       }
 
-      // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample,onclick: encodeURI(onclick.toString())}
+      CatTreeMessage[0] = {TreeStructure: TreeStructureSample,
+                          option:
+                          {
+                              onclick: encodeURI(onclick.toString()),
+                              title: '淡新檔案客家事件分類',
+                              theme: 'dark'
+                          }
+      }
       // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample}
-      CatTreeMessage[0] = {DocuSkySearch: DocuSkySearchData,onclick: encodeURI(onclick.toString())}
-      // ok CatTreeMessage[0] = {DocuSkySearch: DocuSkySearchData}
+      // ok CatTreeMessage[0] = {DocuSkySearch: DocuSkySearchData,onclick: encodeURI(onclick.toString())}
+      CatTreeMessage[1] = {DocuSkySearch: DocuSkySearchData}
       // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData,onclick: encodeURI(onclick.toString())}
-      // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData}
+      CatTreeMessage[2] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData,
+                              option:
+                              {
+                                  onclick: encodeURI(onclick.toString()),
+                                  title: '我就愛說中文',
+                                  theme: 'original',
+                                  quantifierterm: '很多件啊啊啊',
+                                  openTreeAll: true
+                              }
+
+                          }
       return CatTreeMessage;
     }
   </script>
