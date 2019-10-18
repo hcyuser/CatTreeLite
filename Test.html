@@ -87,13 +87,19 @@
                                 theme: 'dark'
                             }
                           }
-      // ok CatTreeMessage[0] = {TreeStructure: TreeStructureSample}
-      // ok CatTreeMessage[0] = {DocuSkySearch: DocuSkySearchData,onclick: encodeURI(onclick.toString())}
+      //CatTreeMessage[1] = {TreeStructure: TreeStructureSample}
+      /*CatTreeMessage[1] = {DocuSkySearch: DocuSkySearchData,
+                            option:{
+                              onclick: encodeURI(onclick.toString()),
+                              quantifierterm: '很多件123',
+                            }
+                          }*/
       CatTreeMessage[1] = {DocuSkySearch: DocuSkySearchData,
                             option:
                             {
                                 onclick: encodeURI(onclick.toString()),
                                 title: '666',
+                                quantifierterm: '很多件123',
                                 openTreeTerm : '故事'
 
                             }
@@ -106,8 +112,8 @@
                                   title: '我就愛說中文',
                                   theme: 'original',
                                   quantifierterm: '很多件啊啊啊',
-                                  //openTreeAll: true,
-                                  openTreeTerm : '嘗會'
+                                  openTreeAll: true,
+                                  //openTreeTerm : '嘗會'
                               }
 
                           }

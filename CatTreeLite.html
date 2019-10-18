@@ -148,7 +148,7 @@
               //console.log(splitArr);
               //console.log(cnt);
               //console.log(TreeStructure);
-              addNodeNametoTreeStructure(indexNode,cnt,splitArr,TreeStructure,TreeStructureAppendInfo);
+              addNodeNametoTreeStructure(indexNode,cnt,splitArr,TreeStructure,TreeStructureAppendInfo, option);
             }
           }
         }
@@ -216,12 +216,22 @@
       }
 
     }
-    function addNodeNametoTreeStructure(indexNode,count,splitArr,TreeStructure,TreeStructureAppendInfo){
+    function addNodeNametoTreeStructure(indexNode,count,splitArr,TreeStructure,TreeStructureAppendInfo, option){
       if(indexNode==0 && splitArr.length==1 && count!=0){
-        TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': '0', 'text': splitArr[indexNode]+`(${count}件)`};
+        if(option.quantifierterm){
+          TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': '0', 'text': splitArr[indexNode]+`(${count}${option.quantifierterm})`};
+        }else{
+          TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': '0', 'text': splitArr[indexNode]+`(${count}件)`};
+        }
+
       }else if(indexNode==splitArr.length-1){
         var ParentID = getParentID(indexNode,splitArr,TreeStructure);
-        TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]+`(${count}件)`};
+        if(option.quantifierterm){
+          TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]+`(${count}${option.quantifierterm})`};
+        }else{
+          TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]+`(${count}件)`};
+        }
+
       }else{
         var ParentID = getParentID(indexNode,splitArr,TreeStructure);
         TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]};
