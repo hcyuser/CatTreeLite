@@ -4,31 +4,45 @@
   <title>CatTree Lite</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.8/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jstree-bootstrap-theme@1.0.1/src/themes/proton/style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.css">
+
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.18/css/dataTables.bootstrap4.min.css"/>
+  <script type="text/javascript" src="https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.2/xlsx.full.min.js"></script>
+
   <style type='text/css'>
   button{
     border-radius:5px;
     background-color:teal;
     color:white;
+    padding: 1.5px 1.5px;
   }
   </style>
   <script>
-
+    var xlsxInJSON;
     $( document ).ready(function() {
       //console.log( "ready!" );
-      var treestructurejson_url = getUrlParameter('treestructurejson_url');
-      if(treestructurejson_url){
-        //console.log(treestructurejson_url);
-          var TreeStructure = {};
+      $('#independentToolModal').modal('show');
+      var url = getUrlParameter('url');
+      if(url){
+
+        if(url.includes('.json')){
+
+          var TreeStructures = [];
           $.ajax({
-                 url: treestructurejson_url,
+                 url: url,
                  type: "GET",
 
                  success: function(data) {
-                    TreeStructure = data;
+                    TreeStructures = data;
                     //console.log(JSON.stringify(data));
                  },
                  error : function(error) {
@@ -36,9 +50,12 @@
                     //console.log("no good "+JSON.stringify(error));
                  }
           });
-          var option = {};
-          option.id = 0;
-          initialTreefromTreeStructure(TreeStructure, option);
+
+          var event = {};
+          event.data = TreeStructures;
+          receiveMessage(event);
+
+        }
       }
 
     });
@@ -58,87 +75,192 @@
           }
     }
 
-    function initialTreefromTreeStructure(TreeStructure, option){
-      if(option.theme == 'original'){
+    function xlsxUpload(e) {
+              //取得上傳第一個檔案
+              //var files = e.target.files;
+              var f = e.files[0];
+              //使用FileReader讀檔
+              var reader = new FileReader();
+              //檔案名稱
+              var name = f.name;
 
-        $('#CatTree' + option.id).jstree({ 'core' : {
-          'data' : TreeStructure
+              //onload觸發事件
+              reader.onload = function (e) {
+
+                  //對象內資料
+                  var data = e.target.result;
+
+                  //讀取xlsx資料
+                  xlsxInJSON = readxlsx(data, 'json');
+                  //var retcsv = readxlsx(data, 'csv');
+                  $('#independentToolModal').modal('hide');
+
+              };
+              //以BinaryString讀入
+              reader.readAsBinaryString(f);
+    }
+    function readxlsx(inpdata, fmt) {
+            //讀取xlsx檔
+
+            //參數
+            //inpdata為由input file讀入之data
+            //fmt為讀取格式，可有"json"或"csv"，csv格式之分欄符號為逗號，分行符號為[\n]
+
+            //說明
+            //所使用函式可參考js-xlsx的GitHub文件[https://github.com/SheetJS/js-xlsx]
+
+
+            //to_json
+            function to_json(workbook) {
+                var result = {};
+                workbook.SheetNames.forEach(function (sheetName) {
+                    var roa = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+                    if (roa.length > 0) {
+                        result[sheetName] = roa;
+                    }
+                });
+                return result;
+            }
+
+
+            //to_csv
+            function to_csv(workbook) {
+                var result = [];
+                workbook.SheetNames.forEach(function(sheetName) {
+                    var csv = XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+                    if(csv.length > 0){
+                        result.push('SHEET: ' + sheetName);
+                        result.push('\n');
+                        result.push(csv);
+                    }
+                });
+                return result;
+            }
+
+
+            //讀檔
+            var workbook = XLSX.read(inpdata, { type: 'binary' });
+
+
+            //轉為json物件回傳
+            if (fmt === 'json') {
+                return to_json(workbook);
+            }
+            else {
+                return to_csv(workbook);
+            }
+
+
+    }
+
+    function initialTreefromTreeStructure(receiveData){
+      if(receiveData.theme == 'original'){
+
+        $('#CatTree' + receiveData.id).jstree({
+          'core' : {
+            'data' : receiveData.TreeStructure
+          },
+          'plugins': ['search'],
+          'search': {
+              'show_only_matches': true,
+              'show_only_matches_children': true
           }
+
         });
 
       }
-      else if(option.theme == 'dark'){
+      else if(receiveData.theme == 'dark'){
 
-        $('#CatTree' + option.id).jstree({ 'core' : {
-          'data' : TreeStructure,
-          'themes': {
-                  'responsive': true
-              }
+        $('#CatTree' + receiveData.id).jstree({
+          'core' : {
+              'data' : receiveData.TreeStructure,
+              'themes': {
+                      'responsive': true
+                  }
+          },
+          'plugins': ['search'],
+          'search': {
+              'show_only_matches': true,
+              'show_only_matches_children': true
           }
+
         });
 
 
       }
-      else if(option.theme == 'proton'){
+      else if(receiveData.theme == 'proton'){
 
-        $('#CatTree' + option.id).jstree({ 'core' : {
-          'data' : TreeStructure,
-          'themes': {
-                  'name': 'proton',
-                  'responsive': true
-              }
+        $('#CatTree' + receiveData.id).jstree({
+          'core' : {
+                'data' : receiveData.TreeStructure,
+                'themes': {
+                        'name': 'proton',
+                        'responsive': true
+                    }
+          },
+          'plugins': ['search'],
+          'search': {
+              'show_only_matches': true,
+              'show_only_matches_children': true
           }
+
         });
 
       }
       else{
 
-        $('#CatTree' + option.id).jstree({ 'core' : {
-          'data' : TreeStructure,
-          'themes': {
-                  'name': 'proton',
-                  'responsive': true
+        $('#CatTree' + receiveData.id).jstree({
+
+          'core' : {
+              'data' : receiveData.TreeStructure,
+              'themes': {
+                      'name': 'proton',
+                      'responsive': true
               }
+          },
+          'plugins': ['search'],
+          'search': {
+              'show_only_matches': true,
+              'show_only_matches_children': true
           }
+
         });
+
       }
 
 
-      $('#CatTree' + option.id).on("changed.jstree", function (e, data) {
+
+      $('#CatTree' + receiveData.id).on("changed.jstree", function (e, data) {
         var i, j;
         for(i = 0, j = data.selected.length; i < j; i++)  {
           //console.log(data);
           if(data.node.original.url){
             window.open(data.node.original.url);
-          }else{
-            if(option.onclick){
-              eval('onclickFun = ' + decodeURI(option.onclick));
-              onclickFun(data.node.original, TreeStructure);
-            }
           }
 
         }
       });
 
-      openTreeTerm(TreeStructure, option);
+
+      openTreeTerm(receiveData);
 
     }
 
-    function initialTreefromDocuSkySearch(DocuSkySearch, option){
+    function initialTreefromDocuSkySearch(receiveData){
         //console.log(DocuSkySearch);
         var TreeStructure = [];
-        if(option.title){
-          TreeStructure[0] = {'id': '0', 'parent': '#', 'text': option.title};
+        if(receiveData.title){
+          TreeStructure[0] = {'id': '0', 'parent': '#', 'text': receiveData.title};
         }else{
           TreeStructure[0] = {'id': '0', 'parent': '#', 'text': 'CatTree Lite'};
         }
 
         var TreeStructureAppendInfo = {'id':1};
-        for(index in DocuSkySearch){
+        for(index in receiveData.DocuSkySearch){
           //console.log(DocuSkySearch[index].cnt);
           //console.log(DocuSkySearch[index]);
-          var splitArr = DocuSkySearch[index].cue.split('/');
-          var cnt = DocuSkySearch[index].cnt;
+          var splitArr = receiveData.DocuSkySearch[index].cue.split('/');
+          var cnt = receiveData.DocuSkySearch[index].cnt;
           for(indexNode in splitArr){
             //console.log(DocuSkySearch[index].cue);
             //console.log(splitArr);
@@ -148,12 +270,13 @@
               //console.log(splitArr);
               //console.log(cnt);
               //console.log(TreeStructure);
-              addNodeNametoTreeStructure(indexNode,cnt,splitArr,TreeStructure,TreeStructureAppendInfo, option);
+              addNodeNametoTreeStructure(indexNode,cnt,splitArr,TreeStructure,TreeStructureAppendInfo, receiveData);
             }
           }
         }
         //console.log(TreeStructure);
-        initialTreefromTreeStructure(TreeStructure, option);
+        receiveData.TreeStructure = TreeStructure;
+        initialTreefromTreeStructure(receiveData);
 
     }
 
@@ -216,18 +339,18 @@
       }
 
     }
-    function addNodeNametoTreeStructure(indexNode,count,splitArr,TreeStructure,TreeStructureAppendInfo, option){
+    function addNodeNametoTreeStructure(indexNode,count,splitArr,TreeStructure,TreeStructureAppendInfo, receiveData){
       if(indexNode==0 && splitArr.length==1 && count!=0){
-        if(option.quantifierterm){
-          TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': '0', 'text': splitArr[indexNode]+`(${count}${option.quantifierterm})`};
+        if(receiveData.quantifierTerm){
+          TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': '0', 'text': splitArr[indexNode]+`(${count}${receiveData.quantifierTerm})`};
         }else{
           TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': '0', 'text': splitArr[indexNode]+`(${count}件)`};
         }
 
       }else if(indexNode==splitArr.length-1){
         var ParentID = getParentID(indexNode,splitArr,TreeStructure);
-        if(option.quantifierterm){
-          TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]+`(${count}${option.quantifierterm})`};
+        if(receiveData.quantifierTerm){
+          TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]+`(${count}${receiveData.quantifierTerm})`};
         }else{
           TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]+`(${count}件)`};
         }
@@ -239,16 +362,18 @@
       TreeStructureAppendInfo.id += 1;
     }
 
-    function initialTreefromTreeStructureandDocuSkySearch(TreeStructure, DocuSkySearch, option){
-      var TreeStructurewithCNT = TreeStructure;
-      for(index in DocuSkySearch){
-        var splitArr = DocuSkySearch[index].cue.split('/');
-        var cnt = DocuSkySearch[index].cnt;
+    function initialTreefromTreeStructureandDocuSkySearch(receiveData){
+      //console.log(TreeStructure);
+      var TreeStructurewithCNT = receiveData.TreeStructure;
+      for(index in receiveData.DocuSkySearch){
+        var splitArr = receiveData.DocuSkySearch[index].cue.split('/');
+        var cnt = receiveData.DocuSkySearch[index].cnt;
         var ParentID = getParentID(splitArr.length-1,splitArr,TreeStructurewithCNT);
         for(indexStructure in TreeStructurewithCNT){
           if(TreeStructurewithCNT[indexStructure].text==splitArr[splitArr.length-1] && ParentID==TreeStructurewithCNT[indexStructure].parent){
-            if(option.quantifierterm){
-              TreeStructurewithCNT[indexStructure].text += `(${cnt}${option.quantifierterm})`;
+            if(receiveData.quantifierTerm){
+              TreeStructurewithCNT[indexStructure].text += `(${cnt}${receiveData.quantifierTerm})`;
+
             }else{
               TreeStructurewithCNT[indexStructure].text += `(${cnt}件)`;
             }
@@ -256,7 +381,8 @@
           }
         }
       }
-      initialTreefromTreeStructure(TreeStructurewithCNT, option);
+      receiveData.TreeStructure = TreeStructurewithCNT;
+      initialTreefromTreeStructure(receiveData);
 
     }
 
@@ -273,29 +399,13 @@
       });
     }
 
-    function openTreeTerm(TreeStructure, option){
-      var openNodeArr = [];
-      if(option.openTreeTerm){
-        for(index in TreeStructure){
-            if(TreeStructure[index].text.includes(option.openTreeTerm)){
-              var id = index;
-              while(id != '#'){
-                openNodeArr.push(id);
-                id = TreeStructure[id].parent;
-              }
+    function openTreeTerm(receiveData){
 
-            }
-        }
-
-        $("#CatTree" + option.id).on('loaded.jstree', function() {
-          for( var i = openNodeArr.length; i >= 0; i--){
-            $("#CatTree" + option.id).jstree("open_node", $("#"+openNodeArr[i]));
-          }
-
+      if(receiveData.openTreeTerm){
+        $("#CatTree" + receiveData.id).on('loaded.jstree', function() {
+          $("#CatTree" + receiveData.id).jstree(true).search(receiveData.openTreeTerm);
         });
-        //console.log(openNodeArr);
       }
-
 
     }
 
@@ -313,15 +423,11 @@
 
         var receiveData = event.data[index];
         //console.log(receiveData);
-        if(receiveData.option){
-          receiveData.option.id = index;
-        }else{
-          receiveData.option = {};
-          receiveData.option.id = index;
-        }
+        receiveData.id = index;
 
-        if(receiveData.option.title){
-          buttonHTML += `<button class="controlBtn" type="button" bt="${index}">${receiveData.option.title}</button>`;
+
+        if(receiveData.title){
+          buttonHTML += `<button class="controlBtn" type="button" bt="${index}">${receiveData.title}</button>`;
         }
         else{
           buttonHTML += `<button class="controlBtn" type="button" bt="${index}">CatTree Lite ${index}</button>`;
@@ -331,36 +437,34 @@
 
       }
 
-      $('body').append(buttonHTML);
-      $('body').append(TreeHTML);
+      $('#buttonAndTree').append(buttonHTML);
+      $('#buttonAndTree').append(TreeHTML);
 
       for(index in event.data){
 
         var receiveData = event.data[index];
-        //console.log(receiveData);
-        if(receiveData.option){
-          receiveData.option.id = index;
-        }else{
-          receiveData.option = {};
-          receiveData.option.id = index;
-        }
+        receiveData.id = index;
 
         if(receiveData.DocuSkySearch && receiveData.TreeStructure){
-            initialTreefromTreeStructureandDocuSkySearch(receiveData.TreeStructure,receiveData.DocuSkySearch, receiveData.option);
+            initialTreefromTreeStructureandDocuSkySearch(receiveData);
         }else if(receiveData.DocuSkySearch){
-            initialTreefromDocuSkySearch(receiveData.DocuSkySearch, receiveData.option);
+            initialTreefromDocuSkySearch(receiveData);
         }else if(receiveData.TreeStructure){
-            initialTreefromTreeStructure(receiveData.TreeStructure, receiveData.option);
+            initialTreefromTreeStructure(receiveData);
         }else{
           alert('Error No Tree Data');
         }
 
-        openTreeRoot(receiveData.option.id);
-        if(receiveData.option.openTreeAll){
-          openTreeAll(receiveData.option.id);
+        openTreeRoot(receiveData.id);
+        if(receiveData.openTreeAll){
+          openTreeAll(receiveData.id);
         }
 
+
       }
+
+      $('#independentToolModal').modal('hide');
+      $('#ShowCSVTable').hide();
 
       $(".tree").hide();
       $(".controlBtn").hide();
@@ -382,6 +486,75 @@
 
 </head>
 <body>
+  <div class="container">
+    <div class="row">
+        <div id='buttonAndTree' class="col-xs-3">
+        </div>
+        <div class="col-xs-1">
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+        <div id='ShowCSVTable' class="col-xs-8">
+          <table id="CSVTable" class="display" style="width:150%">
+                  <thead>
+                      <tr>
+                          <th>Name</th>
+                          <th>Position</th>
+                          <th>Office</th>
+                          <th>Age</th>
+                          <th>Start date</th>
+                          <th>Salary</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr>
+                          <td>Donna Snider</td>
+                          <td>Customer Support</td>
+                          <td>New York</td>
+                          <td>27</td>
+                          <td>2011/01/25</td>
+                          <td>$112,000</td>
+                      </tr>
+                  </tbody>
+
+          </table>
+        </div>
+    </div>
+  </div>
+
+  <!-- The ContactModal -->
+  <div class="modal fade" id="independentToolModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">CatTree Lite</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal body -->
+        <div class="modal-body">
+          <p>這是一個用來觀察文件分類的工具 (Excel 規範表)</p>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroupFileAddon01 selectInFile">Upload Excel</span>
+            </div>
+            <div class="custom-file">
+              <input type="file" class="custom-file-input" id="selectInFile" aria-describedby="inputGroupFileAddon01" onchange="xlsxUpload(this)" accept='.xls, .xlsx'>
+              <label class="custom-file-label" for="inputGroupFileAddon01">Choose file</label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

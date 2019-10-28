@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="http://docusky.org.tw/DocuSky/js/jquery.min.js"></script>
   <script src="http://docusky.org.tw/DocuSky/js/jquery-ui.min.js"></script>
-  <link href="http://docusky.org.tw/DocuSky/fonts/fontawesome-5.10.1/css/fontawesome.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" rel="stylesheet">
 
   <script>
     $( document ).ready(function() {
@@ -17,7 +17,7 @@
 
     function iframeTree(evt){
       var url = "./CatTreeLite.html";
-      var iframeWidth = 400;
+      var iframeWidth = 1200;
       var iframeHeight = 620;
       var title = "CatTree Lite";
       var iframeId = showUrlIframe(evt, url, title, iframeWidth, iframeHeight);
@@ -70,56 +70,39 @@
                             {'id': '5', 'parent': '4', 'text': '嘗會'},
                             {'id': '6', 'parent': '5', 'text': '-'},
                             ];
+
       //var DocuSkySearchData = [{cue:'-/-/-',cnt:'100', 'Mark': '124'}];
       var DocuSkySearchData = [{cue:'土地/-',cnt:'100', 'Mark': '124'},{cue:'宗教/嘗會/-',cnt:'12'},
                               {cue:'宗教/廟宇/1', cnt:'122'},{cue:'宗教/廟宇/故事', cnt:'124'},{cue:'宗教/廟1/故事', cnt:'125'},{cue:'N/N/N', cnt:'124'},{cue:'-/1/-', cnt:'124'}];
-      var onclick = function(node, TreeStructure){
-        console.log('Node: '+ JSON.stringify(node));
-        console.log('TreeStructure: '+ JSON.stringify(TreeStructure));
-        window.open('http://140.112.114.10/DocuSky/webApi/webpage-search-3in1.php?db=淡新檔案&corpus=淡新檔案&queryBase='+node.text);
-      }
 
-      CatTreeMessage[0] = {TreeStructure: TreeStructureSample,
-                            option:
-                            {
-                                onclick: encodeURI(onclick.toString()),
-                                title: '淡新檔案客家事件分類',
-                                theme: 'dark'
-                            }
+      CatTreeMessage[0] = {TreeStructure: JSON.parse(JSON.stringify(TreeStructureSample)),
+                           title: '淡新檔案客家事件分類',
+                           theme: 'dark',
+                           openTreeTerm : '-'
                           }
       //CatTreeMessage[1] = {TreeStructure: TreeStructureSample}
-      /*CatTreeMessage[1] = {DocuSkySearch: DocuSkySearchData,
-                            option:{
-                              onclick: encodeURI(onclick.toString()),
-                              quantifierterm: '很多件123',
-                            }
-                          }*/
-      CatTreeMessage[1] = {DocuSkySearch: DocuSkySearchData,
-                            option:
-                            {
-                                onclick: encodeURI(onclick.toString()),
-                                title: '666',
-                                quantifierterm: '很多件123',
-                                openTreeTerm : '故事'
+      CatTreeMessage[1] = {DocuSkySearch: JSON.parse(JSON.stringify(DocuSkySearchData)),
+                           quantifierTerm: '很多件123',
+                           openTreeTerm : '故事'
 
-                            }
                           }
-      CatTreeMessage[2] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData,
-                              option:
-                              {
-                                onclick: encodeURI(onclick.toString())
-                              }
+      CatTreeMessage[2] = {DocuSkySearch: JSON.parse(JSON.stringify(DocuSkySearchData)),
+                           title: '666',
+                           quantifierTerm: '很多件123',
+
+
                           }
-      CatTreeMessage[3] = {TreeStructure: TreeStructureSample,DocuSkySearch: DocuSkySearchData,
-                              option:
-                              {
-                                  onclick: encodeURI(onclick.toString()),
-                                  title: '我就愛說中文',
-                                  theme: 'original',
-                                  quantifierterm: '很多件啊啊啊',
-                                  openTreeAll: true,
-                                  //openTreeTerm : '嘗會'
-                              }
+
+      CatTreeMessage[3] = {TreeStructure: JSON.parse(JSON.stringify(TreeStructureSample)), DocuSkySearch: JSON.parse(JSON.stringify(DocuSkySearchData)),
+                           title: '我就愛說中文',
+                           theme: 'original',
+                           quantifierTerm: '很多件啊啊啊234',
+                           openTreeAll: true,
+                           openTreeTerm : '嘗會'
+                          }
+      CatTreeMessage[4] = {TreeStructure: JSON.parse(JSON.stringify(TreeStructureSample)), DocuSkySearch: JSON.parse(JSON.stringify(DocuSkySearchData)),
+                           quantifierTerm: '很多4566',
+                           openTreeAll: true
 
                           }
       return CatTreeMessage;
