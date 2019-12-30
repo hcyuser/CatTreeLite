@@ -17,7 +17,7 @@
 
     function iframeTree(evt){
       var url = "./CatTreeLite.html";
-      var iframeWidth = 1200;
+      var iframeWidth = 400;
       var iframeHeight = 620;
       var title = "CatTree Lite";
       var iframeId = showUrlIframe(evt, url, title, iframeWidth, iframeHeight);
@@ -72,26 +72,24 @@
                             ];
 
       //var DocuSkySearchData = [{cue:'-/-/-',cnt:'100', 'Mark': '124'}];
-      var DocuSkySearchData = [{cue:'土地/-',cnt:'100', 'Mark': '124'},{cue:'宗教/嘗會/-',cnt:'12'},
+      var DocuSkySearchData = [{cue:'土地/-',cnt:'100', 'Mark': '124',url:'http://yahoo.com.tw'},{cue:'宗教/嘗會/-',cnt:'12'},
                               {cue:'宗教/廟宇/1', cnt:'122'},{cue:'宗教/廟宇/故事', cnt:'124'},{cue:'宗教/廟1/故事', cnt:'125'},{cue:'N/N/N', cnt:'124'},{cue:'-/1/-', cnt:'124'}];
 
       CatTreeMessage[0] = {TreeStructure: JSON.parse(JSON.stringify(TreeStructureSample)),
                            title: '淡新檔案客家事件分類',
                            theme: 'dark',
                            openTreeTerm : '-'
-                          }
+                         }
       //CatTreeMessage[1] = {TreeStructure: TreeStructureSample}
       CatTreeMessage[1] = {DocuSkySearch: JSON.parse(JSON.stringify(DocuSkySearchData)),
                            quantifierTerm: '很多件123',
                            openTreeTerm : '故事'
 
-                          }
+                         }
       CatTreeMessage[2] = {DocuSkySearch: JSON.parse(JSON.stringify(DocuSkySearchData)),
                            title: '666',
                            quantifierTerm: '很多件123',
-
-
-                          }
+                         }
 
       CatTreeMessage[3] = {TreeStructure: JSON.parse(JSON.stringify(TreeStructureSample)), DocuSkySearch: JSON.parse(JSON.stringify(DocuSkySearchData)),
                            title: '我就愛說中文',
@@ -99,12 +97,12 @@
                            quantifierTerm: '很多件啊啊啊234',
                            openTreeAll: true,
                            openTreeTerm : '嘗會'
-                          }
+                         }
       CatTreeMessage[4] = {TreeStructure: JSON.parse(JSON.stringify(TreeStructureSample)), DocuSkySearch: JSON.parse(JSON.stringify(DocuSkySearchData)),
                            quantifierTerm: '很多4566',
                            openTreeAll: true
 
-                          }
+                         }
       return CatTreeMessage;
     }
   </script>

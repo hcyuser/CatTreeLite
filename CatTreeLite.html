@@ -27,7 +27,6 @@
   }
   </style>
   <script>
-    var xlsxInJSON;
     $( document ).ready(function() {
       //console.log( "ready!" );
       $('#independentToolModal').modal('show');
@@ -91,7 +90,10 @@
                   var data = e.target.result;
 
                   //讀取xlsx資料
-                  xlsxInJSON = readxlsx(data, 'json');
+                  var xlsxInJSON = readxlsx(data, 'json');
+                  processXLSX(xlsxInJSON);
+                  //console.log(xlsxInJSON);
+
                   //var retcsv = readxlsx(data, 'csv');
                   $('#independentToolModal').modal('hide');
 
@@ -151,6 +153,143 @@
             }
 
 
+    }
+    function processXLSX(xlsxInJSON){
+      //console.log(xlsxInJSON);
+      var sheetName = [];
+      for (let key in xlsxInJSON){
+         if(xlsxInJSON.hasOwnProperty(key)){
+           sheetName.push(key);
+           //console.log(`${key} : ${xlsxInJSON[key]}`)
+         }
+      }
+
+      var buttonHTML = '';
+      var TreeHTML = '';
+
+      for(let key in sheetName){
+        buttonHTML += `<button class="controlBtn" type="button" bt="${key}">${sheetName[key]}</button>`;
+        TreeHTML += `<div class="tree" id="CatTree${key}"></div>`;
+      }
+      $('#buttonAndTree').append(buttonHTML);
+      $('#buttonAndTree').append(TreeHTML);
+      $(".tree").hide();
+      $(".controlBtn").hide();
+      if(sheetName.length == 1){
+        $(".tree").show();
+      }else{
+        $(".controlBtn").show();
+        $("#CatTree0").show();
+        $(".controlBtn").click(function(){
+          var getIndex = $(this).attr('bt');
+          $(".tree").hide();
+          $("#CatTree"+getIndex).show();
+        });
+      }
+
+      for(let index in sheetName){
+        var columnName = new Set();
+        var numberL = 0;
+        var DocuSkySearchData = [];
+        for(let key in xlsxInJSON[sheetName[index]]){
+          for(let rowKey in xlsxInJSON[sheetName[index]][key]){
+            if(xlsxInJSON[sheetName[index]][key].hasOwnProperty(rowKey)){
+              columnName.add(rowKey);
+            }
+          }
+        }
+
+        columnName = Array.from(columnName);
+        //console.log(columnName);
+
+        for(let columnNameIndex in columnName){
+          if(columnName[columnNameIndex].includes("L")){
+            numberL++;
+          }
+        }
+        //console.log(numberL);
+        for(let rowIndex in xlsxInJSON[sheetName[index]]){
+          //console.log(xlsxInJSON[sheetName[index]][rowIndex]);
+          var DocuSkySearchDataRow = "";
+          for(let i = 1; i <= numberL; i++){
+            if(xlsxInJSON[sheetName[index]][rowIndex]["L"+i] && $.trim(xlsxInJSON[sheetName[index]][rowIndex]["L"+i])){
+              DocuSkySearchDataRow += "/" + xlsxInJSON[sheetName[index]][rowIndex]["L"+i];
+            }else{
+              DocuSkySearchDataRow += "/-";
+            }
+          }
+          DocuSkySearchDataRow = DocuSkySearchDataRow.slice(1,DocuSkySearchDataRow.length);
+          //console.log(DocuSkySearchDataRow);
+          let isDocuSkySearchDataRowExist = false;
+          for(let DocuSkySearchDataIndex in DocuSkySearchData){
+            if(DocuSkySearchData[DocuSkySearchDataIndex].cue == DocuSkySearchDataRow){
+              DocuSkySearchData[DocuSkySearchDataIndex].cnt += 1;
+              isDocuSkySearchDataRowExist = true;
+              break;
+            }
+          }
+          if(!isDocuSkySearchDataRowExist){
+            DocuSkySearchData.push({cue:DocuSkySearchDataRow, cnt:1});
+          }
+        }
+        var receiveData = {};
+        receiveData.DocuSkySearch = DocuSkySearchData;
+        receiveData.id = index;
+        receiveData.title = sheetName[index];
+        //console.log(receiveData);
+        initialTreefromDocuSkySearch(receiveData);
+
+        $('#CatTree' + index).on("changed.jstree", function (e, data) {
+          var i, j;
+          for(i = 0, j = data.selected.length; i < j; i++)  {
+
+            var DocuSkySearchDataRow = "";
+            for(let parentNodeIndex in data.node.parents){
+              if(data.node.parents[parentNodeIndex] != "0" && data.node.parents[parentNodeIndex] != "#"){
+                DocuSkySearchDataRow = $('#CatTree' + index).jstree()._model.data[data.node.parents[parentNodeIndex]].text + "/" + DocuSkySearchDataRow;
+              }
+            }
+
+            DocuSkySearchDataRow += data.node.text.replace(/\(\d+件\)/g,'');
+            //console.log(sheetName[index]+" "+DocuSkySearchDataRow);
+            plotCSVTable(sheetName[index],xlsxInJSON[sheetName[index]],DocuSkySearchDataRow);
+
+            //console.log(DocuSkySearchDataRow);
+            /*if(data.node.original.url){
+              window.open(data.node.original.url);
+            }*/
+
+
+          }
+        });
+
+        openTreeRoot(index);
+
+      }
+
+
+    }
+
+    function plotCSVTable(title,sheetContent,nodeSeq){
+      var columnName = new Set();
+      for(let key in sheetContent){
+        for(let rowKey in sheetContent[key]){
+          if(sheetContent[key].hasOwnProperty(rowKey)){
+            columnName.add(rowKey);
+          }
+        }
+      }
+      columnName = Array.from(columnName);
+      columnName = columnName.sort();
+
+      console.log(nodeSeq);
+
+      $('#CSVTable').DataTable().destroy();
+      $('#CSVTable').DataTable({
+                        paging:true,
+                        searching:true,
+                        info:true,
+      });
     }
 
     function initialTreefromTreeStructure(receiveData){
@@ -241,7 +380,7 @@
         }
       });
 
-
+      //console.log(receiveData);
       openTreeTerm(receiveData);
 
     }
@@ -261,6 +400,10 @@
           //console.log(DocuSkySearch[index]);
           var splitArr = receiveData.DocuSkySearch[index].cue.split('/');
           var cnt = receiveData.DocuSkySearch[index].cnt;
+          var url = "";
+          if(receiveData.DocuSkySearch[index].url){
+            url = receiveData.DocuSkySearch[index].url;
+          }
           for(indexNode in splitArr){
             //console.log(DocuSkySearch[index].cue);
             //console.log(splitArr);
@@ -270,7 +413,7 @@
               //console.log(splitArr);
               //console.log(cnt);
               //console.log(TreeStructure);
-              addNodeNametoTreeStructure(indexNode,cnt,splitArr,TreeStructure,TreeStructureAppendInfo, receiveData);
+              addNodeNametoTreeStructure(indexNode,cnt,url,splitArr,TreeStructure,TreeStructureAppendInfo, receiveData);
             }
           }
         }
@@ -339,26 +482,38 @@
       }
 
     }
-    function addNodeNametoTreeStructure(indexNode,count,splitArr,TreeStructure,TreeStructureAppendInfo, receiveData){
+    function addNodeNametoTreeStructure(indexNode,count,url,splitArr,TreeStructure,TreeStructureAppendInfo, receiveData){
+
       if(indexNode==0 && splitArr.length==1 && count!=0){
+
         if(receiveData.quantifierTerm){
           TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': '0', 'text': splitArr[indexNode]+`(${count}${receiveData.quantifierTerm})`};
         }else{
           TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': '0', 'text': splitArr[indexNode]+`(${count}件)`};
         }
 
+        if(url){
+          TreeStructure[TreeStructureAppendInfo.id].url = url;
+        }
+
       }else if(indexNode==splitArr.length-1){
         var ParentID = getParentID(indexNode,splitArr,TreeStructure);
+
         if(receiveData.quantifierTerm){
           TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]+`(${count}${receiveData.quantifierTerm})`};
         }else{
           TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]+`(${count}件)`};
         }
 
+        if(url){
+          TreeStructure[TreeStructureAppendInfo.id].url = url;
+        }
+
       }else{
         var ParentID = getParentID(indexNode,splitArr,TreeStructure);
         TreeStructure[TreeStructureAppendInfo.id] = {'id': TreeStructureAppendInfo.id, 'parent': ParentID, 'text': splitArr[indexNode]};
       }
+
       TreeStructureAppendInfo.id += 1;
     }
 
@@ -488,34 +643,24 @@
 <body>
   <div class="container">
     <div class="row">
-        <div id='buttonAndTree' class="col-xs-3">
+        <div id='buttonAndTree' class="col-lg-3">
         </div>
-        <div class="col-xs-1">
+        <div class="col-lg-1">
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         </div>
-        <div id='ShowCSVTable' class="col-xs-8">
-          <table id="CSVTable" class="display" style="width:150%">
-                  <thead>
-                      <tr>
-                          <th>Name</th>
-                          <th>Position</th>
-                          <th>Office</th>
-                          <th>Age</th>
-                          <th>Start date</th>
-                          <th>Salary</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      <tr>
-                          <td>Donna Snider</td>
-                          <td>Customer Support</td>
-                          <td>New York</td>
-                          <td>27</td>
-                          <td>2011/01/25</td>
-                          <td>$112,000</td>
-                      </tr>
-                  </tbody>
+        <div id='ShowCSVTable' class="col-lg-8">
 
+          <table id="CSVTable" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>歡迎</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>請點選左方的樹狀圖節點，此表單會顯示節點內的文本資料</td>
+                </tr>
+            </tbody>
           </table>
         </div>
     </div>
