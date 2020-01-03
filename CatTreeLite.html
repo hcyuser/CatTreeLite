@@ -207,6 +207,12 @@
             numberL++;
           }
         }
+
+        for(let i = 1; i <= numberL; i++){
+          if(!columnName.includes("L"+i)){
+            alert("缺少/ Missing L"+i);
+          }
+        }
         //console.log(numberL);
         for(let rowIndex in xlsxInJSON[sheetName[index]]){
           //console.log(xlsxInJSON[sheetName[index]][rowIndex]);
@@ -270,6 +276,38 @@
 
     }
 
+    function outputContentValueWithMetadataSetting(columnNameValue,value){
+      console.log(columnNameValue+" " +value);
+      if(columnNameValue.includes("RefId")){
+        if(value.includes("twgis_") || value.includes("dila_PL") || value.includes("hvd_")){
+          return `<a href="https://docusky.org.tw/DocuSky/docuTools/DocuGIS/api/lite.html?&id2=${value};;;redcircle;;;redcircle" target="_blank">DocuGIS Lite</a>`;
+        }
+        else if(value.includes("xy=")){
+          return `${value}`;
+        }
+        else if(value.includes("cbdb_")){
+          let cbdburl = "https://cbdb.fas.harvard.edu/cbdbapi/person.php?id=" + value.split("cbdb_")[1];
+          return `<a href=${cbdburl} target="_blank">CBDB</a>`;
+        }
+        else if(value.includes("dila_A")){
+          let dilaurl = "https://authority.dila.edu.tw/person/search.php?aid=" + value.split("dila_")[1];
+          return `<a href=${dilaurl} target="_blank">DILA</a>`;
+        }
+      }
+      else if(columnNameValue.includes("Url")){
+        let url = new URL(value);
+        return `<a href="${value}" target="_blank">${url.hostname}</a>`;
+      }
+      else if(columnNameValue.includes("IiifManifest")){
+
+        return `<a href="${value}" target="_blank">IiifManifest</a>`;
+      }
+      else{
+        return value;
+      }
+
+    }
+
     function plotCSVTable(title,sheetContent,nodeSeq){
       var columnName = new Set();
       for(let key in sheetContent){
@@ -281,10 +319,77 @@
       }
       columnName = Array.from(columnName);
       columnName = columnName.sort();
+      //console.log(columnName);
+      var thead = "<thead><tr>";
+      for(index in columnName){
+        if(!columnName[index].includes("L")){
+          thead += `<th>${columnName[index]}</th>`;
+        }
+      }
+      thead += "</tr></thead>";
+      var tbody = "<tbody>"
+      if(title == nodeSeq){
+        for( index in sheetContent){
+          tbody += "<tr>";
+          for(key in columnName){
+            if(!columnName[key].includes("L")){
+              if(sheetContent[index].hasOwnProperty(columnName[key])){
+                tbody += `<td>${outputContentValueWithMetadataSetting(columnName[key],sheetContent[index][columnName[key]])}</td>`;
+                //tbody += `<td>${sheetContent[index][columnName[key]]}</td>`;
+              }else{
+                tbody += `<td>-</td>`;
+              }
+            }
 
-      console.log(nodeSeq);
+          }
+          tbody += "</tr>";
+        }
+      }else{
+        var nodeArr = nodeSeq.split("/");
+        var numberNodeArrWithoutEmpty = 0;
+        for(i in nodeArr){
+          if(nodeArr[i] != "-"){
+            numberNodeArrWithoutEmpty += 1;
+          }
+        }
+
+        for(index in sheetContent){
+          numberMatch = 0;
+          for(i in nodeArr){
+            if(nodeArr[i] != "-" && sheetContent[index].hasOwnProperty("L"+(i*1+1)) && sheetContent[index]["L"+(i*1+1)] == nodeArr[i]){
+              numberMatch += 1;
+            }
+          }
+
+          if(numberNodeArrWithoutEmpty == numberMatch){
+            tbody += "<tr>";
+            for(key in columnName){
+              if(!columnName[key].includes("L")){
+                if(sheetContent[index].hasOwnProperty(columnName[key])){
+                  tbody += `<td>${outputContentValueWithMetadataSetting(columnName[key],sheetContent[index][columnName[key]])}</td>`;
+                //tbody += `<td>${sheetContent[index][columnName[key]]}</td>`;
+                }else{
+                  tbody += `<td>-</td>`;
+                }
+              }
+
+            }
+            tbody += "</tr>";
+          }
+
+        }
+
+
+
+      }
+
+      tbody += "</tbody>";
+      //alert(thead);
+      //alert(tbody);
+      //console.log(columnName)
 
       $('#CSVTable').DataTable().destroy();
+      $('#CSVTable').html(thead+tbody);
       $('#CSVTable').DataTable({
                         paging:true,
                         searching:true,
