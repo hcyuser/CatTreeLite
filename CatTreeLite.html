@@ -4,7 +4,7 @@
   <title>CatTree Lite</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.8/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jstree-bootstrap-theme@1.0.1/src/themes/proton/style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
@@ -27,32 +27,28 @@
   }
   </style>
   <script>
-    $( document ).ready(function() {
+    $(document).ready(function() {
       //console.log( "ready!" );
       $('#independentToolModal').modal('show');
       var url = getUrlParameter('url');
       if(url){
-
         if(url.includes('.json')){
-
-          var TreeStructures = [];
           $.ajax({
                  url: url,
                  type: "GET",
-
                  success: function(data) {
+                   var TreeStructures = [];
                     TreeStructures = data;
-                    //console.log(JSON.stringify(data));
+                    var event = {};
+                    event.data = TreeStructures;
+                    receiveMessage(event);
                  },
                  error : function(error) {
                     alert('Error');
-                    //console.log("no good "+JSON.stringify(error));
                  }
           });
 
-          var event = {};
-          event.data = TreeStructures;
-          receiveMessage(event);
+
 
         }
       }
@@ -155,7 +151,7 @@
 
     }
     function processXLSX(xlsxInJSON){
-      //console.log(xlsxInJSON);
+      console.log(xlsxInJSON);
       var sheetName = [];
       for (let key in xlsxInJSON){
          if(xlsxInJSON.hasOwnProperty(key)){
@@ -277,10 +273,10 @@
     }
 
     function outputContentValueWithMetadataSetting(columnNameValue,value){
-      console.log(columnNameValue+" " +value);
+      //console.log(columnNameValue+" " +value);
       if(columnNameValue.includes("RefId")){
         if(value.includes("twgis_") || value.includes("dila_PL") || value.includes("hvd_")){
-          return `<a href="https://docusky.org.tw/DocuSky/docuTools/DocuGIS/api/lite.html?&id2=${value};;;redcircle;;;redcircle" target="_blank">DocuGIS Lite</a>`;
+          return `<a href="https://docusky.org.tw/DocuSky/docuTools/DocuGIS/api/lite.html?&id=${value};;;default" target="_blank">DocuGIS Lite</a>`;
         }
         else if(value.includes("xy=")){
           return `${value}`;
@@ -670,76 +666,83 @@
     }
 
     function receiveMessage( event ) {
-  		//console.log( 'receiveMessageData', event.data );
+  		console.log( 'receiveMessageData', event.data );
       if(event.data.length==0){
         alert('Error No Tree Data');
         return;
       }
 
-
-      var buttonHTML = '';
-      var TreeHTML = '';
-      for(index in event.data){
-
-        var receiveData = event.data[index];
-        //console.log(receiveData);
-        receiveData.id = index;
-
-
-        if(receiveData.title){
-          buttonHTML += `<button class="controlBtn" type="button" bt="${index}">${receiveData.title}</button>`;
-        }
-        else{
-          buttonHTML += `<button class="controlBtn" type="button" bt="${index}">CatTree Lite ${index}</button>`;
-        }
-
-        TreeHTML += `<div class="tree" id="CatTree${index}"></div>`;
-
+      if(!Array.isArray(event.data)){
+        processXLSX(event.data);
+        $('#independentToolModal').modal('hide');
       }
+      else{
+        var buttonHTML = '';
+        var TreeHTML = '';
+        for(index in event.data){
 
-      $('#buttonAndTree').append(buttonHTML);
-      $('#buttonAndTree').append(TreeHTML);
+          var receiveData = event.data[index];
+          //console.log(receiveData);
+          receiveData.id = index;
 
-      for(index in event.data){
 
-        var receiveData = event.data[index];
-        receiveData.id = index;
+          if(receiveData.title){
+            buttonHTML += `<button class="controlBtn" type="button" bt="${index}">${receiveData.title}</button>`;
+          }
+          else{
+            buttonHTML += `<button class="controlBtn" type="button" bt="${index}">CatTree Lite ${index}</button>`;
+          }
 
-        if(receiveData.DocuSkySearch && receiveData.TreeStructure){
-            initialTreefromTreeStructureandDocuSkySearch(receiveData);
-        }else if(receiveData.DocuSkySearch){
-            initialTreefromDocuSkySearch(receiveData);
-        }else if(receiveData.TreeStructure){
-            initialTreefromTreeStructure(receiveData);
+          TreeHTML += `<div class="tree" id="CatTree${index}"></div>`;
+
+        }
+
+        $('#buttonAndTree').append(buttonHTML);
+        $('#buttonAndTree').append(TreeHTML);
+
+        for(index in event.data){
+
+          var receiveData = event.data[index];
+          receiveData.id = index;
+
+          if(receiveData.DocuSkySearch && receiveData.TreeStructure){
+              initialTreefromTreeStructureandDocuSkySearch(receiveData);
+          }else if(receiveData.DocuSkySearch){
+              initialTreefromDocuSkySearch(receiveData);
+          }else if(receiveData.TreeStructure){
+              initialTreefromTreeStructure(receiveData);
+          }else{
+            alert('Error No Tree Data');
+          }
+
+          openTreeRoot(receiveData.id);
+          if(receiveData.openTreeAll){
+            openTreeAll(receiveData.id);
+          }
+
+
+        }
+
+        $('#independentToolModal').modal('hide');
+        $('#ShowCSVTable').hide();
+
+        $(".tree").hide();
+        $(".controlBtn").hide();
+        if(event.data.length == 1){
+          $(".tree").show();
         }else{
-          alert('Error No Tree Data');
+          $(".controlBtn").show();
+          $("#CatTree0").show();
+          $(".controlBtn").click(function(){
+            var getIndex = $(this).attr('bt');
+            $(".tree").hide();
+            $("#CatTree"+getIndex).show();
+          });
+
         }
-
-        openTreeRoot(receiveData.id);
-        if(receiveData.openTreeAll){
-          openTreeAll(receiveData.id);
-        }
-
-
       }
 
-      $('#independentToolModal').modal('hide');
-      $('#ShowCSVTable').hide();
 
-      $(".tree").hide();
-      $(".controlBtn").hide();
-      if(event.data.length == 1){
-        $(".tree").show();
-      }else{
-        $(".controlBtn").show();
-        $("#CatTree0").show();
-        $(".controlBtn").click(function(){
-          var getIndex = $(this).attr('bt');
-          $(".tree").hide();
-          $("#CatTree"+getIndex).show();
-        });
-
-      }
 	 }
    window.addEventListener("message", receiveMessage, false);
   </script>
