@@ -60,7 +60,7 @@ Example CatTreeMessage:
                                 {'id': '5', 'parent': '4', 'text': '嘗會'},
                                 {'id': '6', 'parent': '5', 'text': '-'}];
     // 輸入檢索頁面的 Cat 資料
-    var DocuSkySearchData = [{cue:'土地/-',cnt:'100', 'Mark': '124'},
+    var DocuSkySearchData = [{cue:'土地/-',cnt:'100',url:'http://yahoo.com.tw'},
                              {cue:'宗教/嘗會/-',cnt:'12'},
                              {cue:'宗教/廟宇/1', cnt:'122'},{cue:'宗教/廟宇/故事', cnt:'124'},
                              {cue:'宗教/廟1/故事', cnt:'125'},{cue:'N/N/N', cnt:'124'},
@@ -192,4 +192,4 @@ Example ExcelMessage:
         ]
       }
 </script>
-``` 
+```
