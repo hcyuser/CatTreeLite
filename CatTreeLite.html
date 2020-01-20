@@ -151,7 +151,7 @@
 
     }
     function processXLSX(xlsxInJSON){
-      console.log(xlsxInJSON);
+      //console.log(xlsxInJSON);
       var sheetName = [];
       for (let key in xlsxInJSON){
          if(xlsxInJSON.hasOwnProperty(key)){
@@ -666,7 +666,7 @@
     }
 
     function receiveMessage( event ) {
-  		console.log( 'receiveMessageData', event.data );
+  		//console.log( 'receiveMessageData', event.data );
       if(event.data.length==0){
         alert('Error No Tree Data');
         return;

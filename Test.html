@@ -10,18 +10,34 @@
 
   <script>
     $( document ).ready(function() {
-      $("#Test").click(function(evt) {
-        iframeTree(evt);
+      $("#TestCatTreeMessage").click(function(evt) {
+        iframeTreeCatTreeMessage(evt);
+      });
+      $("#TestExcelMessage").click(function(evt) {
+        iframeTreeExcelMessage(evt);
       });
     });
 
-    function iframeTree(evt){
+    function iframeTreeCatTreeMessage(evt){
+      var url = "./CatTreeLite.html";
+      var iframeWidth = 420;
+      var iframeHeight = 620;
+      var title = "CatTree Lite";
+      var iframeId = showUrlIframe(evt, url, title, iframeWidth, iframeHeight);
+      var postMessageData = getPostMessageDataCatTreeMessage();
+      $(iframeId).ready(function() {
+          window.setTimeout(function() {
+             document.getElementById(iframeId).contentWindow.postMessage(postMessageData, "*");
+          }, 1500);
+       });
+    }
+    function iframeTreeExcelMessage(evt){
       var url = "./CatTreeLite.html";
       var iframeWidth = 1200;
       var iframeHeight = 620;
       var title = "CatTree Lite";
       var iframeId = showUrlIframe(evt, url, title, iframeWidth, iframeHeight);
-      var postMessageData = getPostMessageData();
+      var postMessageData = getPostMessageDataExcelMessage();
       $(iframeId).ready(function() {
           window.setTimeout(function() {
              document.getElementById(iframeId).contentWindow.postMessage(postMessageData, "*");
@@ -60,7 +76,7 @@
        $("#" + iframeId).attr('src', url);      // .load(function(){});
        return iframeId;
     }
-    function getPostMessageData(){
+    function getPostMessageDataCatTreeMessage(){
       var CatTreeMessage = [];
       var TreeStructureSample = [ {'id': '0', 'parent': '#', 'text': '淡新檔案客家事件分類', 'onclickDate': '666', url:'http://yahoo.com.tw'},
                             {'id': '1', 'parent': '0', 'text': '土地', 'Mark': 'Test'},
@@ -104,7 +120,10 @@
 
                          }
 
-      ExcelMessage = {
+      return CatTreeMessage;
+    }
+    function getPostMessageDataExcelMessage(){
+      var ExcelMessage = {
         "第一棵分類樹": [
           {
             "1_id": "1",
@@ -205,8 +224,9 @@
   </script>
 </head>
 <body>
-  <button type="button" id="Test">Test CatTree Lite</button>
+  <button type="button" id="TestCatTreeMessage">Test CatTreeMessage CatTree Lite</button>
   <br>
+  <button type="button" id="TestExcelMessage">Test ExcelMessage CatTree Lite</button>
   <div id='iframeArea'></div>
 </body>
 
